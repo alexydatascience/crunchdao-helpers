@@ -27,7 +27,8 @@ def cross_val_targets(model, X, y, scale=False, cv=3, scoring=None):
     scores = OrderedDict()
     for i in range(y.shape[1]):
         score = cross_val_score(pipe, X, np.array(y)[:, i], scoring=scoring, cv=cv)
-        scores[str(y.columns[i])] = np.append(score, score.mean())
+        scores[str(y.columns[i])] = np.append(score, (score.mean(), score.std()))
     out = pd.DataFrame.from_dict(scores, orient='index')
-    out.columns = [f'cv_{i + 1}' for i in range(cv)] + ['mean']
+    out.columns = [f'cv_{i + 1}' for i in range(cv)] + ['mean', 'std']
+    out.loc['mean'] = out.mean()
     return out
