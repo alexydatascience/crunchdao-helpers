@@ -65,6 +65,41 @@ def get_corr_features(df, threshold):
     return list(set([list(x)[0] for x in lst]))
 
 
+def pred_corr(pred_range=None, targets=None):
+    """Spearmanr between saved predictions.
+       Predictions must have names like pred_{number}.csv
+       ---
+       Displays heatmaps for every target and mean.
+       Returns list of dataframes.
+    """
+    if pred_range is None:
+        start, stop = (1, 12)
+    elif isinstance(pred_range, tuple):
+        start, stop = pred_range
+    elif isinstance(pred_range, int):
+        start, stop = (1, pred_range)
+    if targets is None:
+        targets = ['target_r', 'target_g', 'target_b']
+    n = len(targets)
+    dfs = []
+    for i in range(n + 1):
+        dfs.append(pd.DataFrame())
+    for r, c in itertools.combinations(range(start, stop), 2): 
+        preds = [pd.read_csv(f'pred_{i}.csv') for i in (r, c)]
+        scores = [dcl.metrics.scorer(preds[0][t], preds[1][t]) for t in targets]
+        for i in range(n):
+            dfs[i].loc[r, c] = scores[i]
+            dfs[i].index.name = targets[i]
+        dfs[-1].loc[r, c] = np.mean(scores)
+        dfs[-1].index.name = 'mean'
+    fig, ax = plt.subplots(1, n + 1, figsize=(26, 5.5))
+    for i in range(n + 1):
+        sns.heatmap(dfs[i], xticklabels=dfs[i].columns, yticklabels=dfs[i].index, 
+                    annot=True, fmt='.2f', cmap='viridis', ax=ax[i])
+    plt.show()
+    return dfs
+
+
 class CovariateShiftClassifier(object):
     def __init__(self, estimator=None, n_samples=None,
                  threshold=0.2, random_state=None):
