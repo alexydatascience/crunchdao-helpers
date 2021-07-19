@@ -3,6 +3,8 @@ import itertools
 import numpy as np
 import pandas as pd
 import scipy.stats as st
+import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.linear_model import Ridge
 from sklearn.metrics import make_scorer, matthews_corrcoef
 from sklearn.model_selection import cross_val_score
@@ -86,7 +88,7 @@ def pred_corr(pred_range=None, targets=None):
         dfs.append(pd.DataFrame())
     for r, c in itertools.combinations(range(start, stop), 2): 
         preds = [pd.read_csv(f'pred_{i}.csv') for i in (r, c)]
-        scores = [dcl.metrics.scorer(preds[0][t], preds[1][t]) for t in targets]
+        scores = [scorer(preds[0][t], preds[1][t]) for t in targets]
         for i in range(n):
             dfs[i].loc[r, c] = scores[i]
             dfs[i].index.name = targets[i]
