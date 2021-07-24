@@ -32,3 +32,12 @@ def cross_val_targets(model, X, y, scale=False, cv=3, scoring=None):
     out.columns = [f'cv_{i + 1}' for i in range(cv)] + ['mean', 'std']
     out.loc['mean'] = out.mean()
     return out
+
+
+def cross_val_dictm(dictm, X, y):
+    """
+    dictm : dict of models get by dict_rgbmodels
+    """
+    for i, m in enumerate(dictm.values()):
+        scores = cross_val_targets(m, X, y.iloc[:, i])
+        display(scores)
