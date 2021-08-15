@@ -2,6 +2,7 @@ from collections import OrderedDict
 
 import numpy as np
 import pandas as pd
+import itertools
 from sklearn.metrics import make_scorer
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import make_pipeline
