@@ -46,10 +46,10 @@ def cross_val_dictm(dictm, X, y):
 
 def check_chain(model, X, y, cv=2):
     score = cross_val_score(MultiOutputRegressor(model), X, y,
-                            scoring=scorer, cv=cv)
+                            scoring=make_scorer(scorer), cv=cv)
     print(f'No chain: {score} mean: {score.mean()} std: {score.std()}')
     for perm in itertools.permutations(range(3), 3):
         score = cross_val_score(RegressorChain(model, order=list(perm), cv=cv),
-                                X, y, scoring=scorer, cv=cv)
+                                X, y, scoring=make_scorer(scorer), cv=cv)
         print(f'{perm}: {score} mean: {score.mean()} std: {score.std()}')
 
