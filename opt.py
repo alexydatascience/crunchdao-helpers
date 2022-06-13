@@ -1,6 +1,7 @@
 import pandas as pd
 import pickle
 import itertools
+import os
 from collections import defaultdict
 from tqdm import tqdm
 from sklearn.metrics import make_scorer
@@ -9,15 +10,20 @@ from sklearn.pipeline import Pipeline
 from sklearn.linear_model import Ridge
 from skopt import BayesSearchCV
 
-from metrics import scorer
+from .metrics import scorer
 
 
 class Skoptimizer(object):
-    def __init__(self, pipe=None, scoring=None, random_state=None):
+    def __init__(self, pipe=None, scoring=None, dir=None, random_state=None):
         if scoring is None:
             self.scoring = make_scorer(scorer)
         else:
             self.scoring = scoring
+        if dir is None:
+            os.makedirs('models', exist_ok=True)
+            self.dir = 'models'
+        else:
+            self.dir = dir
         self.random_state = random_state
         if pipe is None:
             self.pipe = Pipeline([
@@ -33,14 +39,15 @@ class Skoptimizer(object):
     def bayes_fit(self, X, y, params, suffix='model', cv=3, X_test=None, y_test=None):
         if not isinstance(y, pd.DataFrame):
             y = pd.DataFrame(y)
-        opt = BayesSearchCV(self.pipe, params, cv=cv, scoring=self.scoring,
+        opt = BayesSearchCV(
+            self.pipe, params, cv=cv, scoring=self.scoring,
                             random_state=self.random_state)
         opt.fit(X, y)
 
         col = str(*y)
         score = opt.best_score_
         self.scores_.append((suffix, col, score))
-        opt_name = f'{col}_{suffix}.sav'
+        opt_name = f'{self.dir}/{col}_{suffix}.sav'
         pickle.dump(opt.best_estimator_, open(opt_name, 'wb'))
 
         print(f'\nval. score: {score}')
