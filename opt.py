@@ -39,22 +39,26 @@ class Skoptimizer(object):
     def bayes_fit(self, X, y, params, suffix='model', cv=3, X_test=None, y_test=None):
         if not isinstance(y, pd.DataFrame):
             y = pd.DataFrame(y)
-        opt = BayesSearchCV(
-            self.pipe, params, cv=cv, scoring=self.scoring,
-                            random_state=self.random_state)
-        opt.fit(X, y)
 
         col = str(*y)
-        score = opt.best_score_
-        self.scores_.append((suffix, col, score))
         opt_name = f'{self.dir}/{col}_{suffix}.sav'
-        pickle.dump(opt.best_estimator_, open(opt_name, 'wb'))
+        if os.path.exists(opt_name):
+            print(f'\n{opt_name} already exists')
+        else:
+            opt = BayesSearchCV(
+                self.pipe, params, cv=cv, scoring=self.scoring,
+                                random_state=self.random_state)
+            opt.fit(X, y)
 
-        print(f'\nval. score: {score}')
-        if X_test is not None:
-            print(f'test score: {opt.score(X_test, y_test)}')
+            score = opt.best_score_
+            self.scores_.append((suffix, col, score))
+            pickle.dump(opt.best_estimator_, open(opt_name, 'wb'))
 
-        return opt.best_estimator_
+            print(f'\nval. score: {score}')
+            if X_test is not None:
+                print(f'test score: {opt.score(X_test, y_test)}')
+
+            return opt.best_estimator_
 
     def get_scores(self):
         d = defaultdict(list)
