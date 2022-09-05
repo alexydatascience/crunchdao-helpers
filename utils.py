@@ -6,7 +6,7 @@ import pandas as pd
 import requests
 import os
 
-def pred_from_dictm(X_test, params, pred_suffix, save_csv=True):
+def pred_from_dictm(X_test, params, pred_suffix, save_csv=False):
     """Returns prediction DataFrame from dict of models
     (e.g. dcl.utils.dict_rgbmodels('params_2'))
     """
@@ -22,28 +22,35 @@ def load_models(*model_names):
     return (pickle.load(open(name, 'rb')) for name in model_names)
 
 
-def dict_rgbmodels(params):
+def dict_rgbmodels(params, v4=True):
     """
     params should be taken from name like target_{}_params.save,
     e.g. target_r_stack_params_1_2.sav --> stack_params_1_2
     """
     models_dict = OrderedDict()
-    for y in ['r', 'g', 'b']:
+    targets = ['r', 'g', 'b']
+    if v4:
+        targets += [x + '_v4' for x in targets]
+    for y in targets:
         name = f'target_{y}_{params}.sav'
         models_dict[y] = pickle.load(open(name, 'rb'))
     return models_dict
 
 
-def rgb_df(preds):
+def rgb_df(preds, v4=True):
     if isinstance(preds, np.ndarray):
-        r_pred, g_pred, b_pred = [row for row in preds.T]
-    if isinstance(preds, list):
-        r_pred, g_pred, b_pred = preds
+        preds = [row for row in preds.T]
+    targets = ['r', 'g', 'b']
+    if v4:
+        targets += [x + '_v4' for x in targets]
     prediction = pd.DataFrame({
-        'target_r': np.array(r_pred).flatten(),
-        'target_g': np.array(g_pred).flatten(),
-        'target_b': np.array(b_pred).flatten()
+        f'target_{y}': np.array(pred).flatten() for y, pred in zip(targets, preds)
     })
+    # prediction = pd.DataFrame({
+    #     'target_r': np.array(r_pred).flatten(),
+    #     'target_g': np.array(g_pred).flatten(),
+    #     'target_b': np.array(b_pred).flatten()
+    # })
     return prediction
 
 
@@ -51,10 +58,13 @@ def softmax(x):
     return np.exp(x) / sum(np.exp(x))
 
 
-def submit(prediction):
+def submit(prediction, v4=True):
+    targets = ['target_r', 'target_g', 'target_b']
+    if v4:
+        targets += [x + '_v4' for x in targets]
     if not isinstance(prediction, pd.DataFrame):
         prediction = pd.DataFrame(
-            prediction, columns=['target_r', 'target_g', 'target_b'])
+            prediction, columns=targets)
 
     if any(prediction.max() > 1) or any(prediction.min() < 0):
         prediction = prediction.apply(softmax)
